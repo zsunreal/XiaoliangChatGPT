@@ -12,6 +12,8 @@ import re
 import html
 import sys
 import subprocess
+import geoip2.database
+import socket
 
 import gradio as gr
 from pypinyin import lazy_pinyin
@@ -377,7 +379,11 @@ def replace_today(prompt):
 def get_geoip():
     try:
         with retrieve_proxy():
-            response = requests.get("https://ipapi.co/json/", timeout=5)
+            headers = {
+                'User-Agent': 'Mozi11a/5.0 (Window NT 10.0; Win64; X64) Applewebkit/537.36 (KHmml, 1ike Gecko) '
+                              'Chrome/112.0.0.0 Safari/537.36'
+            }
+            response = requests.get("https://ipapi.co/json/", timeout=5, headers=headers)
         data = response.json()
     except:
         data = {"error": True, "reason": "连接ipapi失败"}
@@ -394,7 +400,7 @@ def get_geoip():
         if country == "China":
             text = "**您的IP区域：中国。请立即检查代理设置，在不受支持的地区使用API可能导致账号被封禁。**"
         else:
-            text = i18n("您的IP区域：") + f"{country}。"
+            text = i18n("服务器IP区域：") + f"{country}。"
         logging.info(text)
         return text
 

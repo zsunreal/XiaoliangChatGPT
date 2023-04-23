@@ -273,7 +273,8 @@ with gr.Blocks(css=customCSS, theme=small_and_beautiful_theme) as demo:
                         default_btn = gr.Button(i18n("🔙 恢复默认设置"))
 
     gr.Markdown(CHUANHU_DESCRIPTION, elem_id="description")
-    gr.HTML(FOOTER.format(versions=versions_html()), elem_id="footer")
+    # gr.HTML(FOOTER.format(versions=versions_html()), elem_id="footer")
+    gr.HTML(FOOTER.format(versions=""), elem_id="footer")
     demo.load(refresh_ui_elements_on_load, [current_model, model_select_dropdown], [like_dislike_area], show_progress=False)
     chatgpt_predict_args = dict(
         fn=predict,
@@ -454,11 +455,11 @@ with gr.Blocks(css=customCSS, theme=small_and_beautiful_theme) as demo:
 
 logging.info(
     colorama.Back.GREEN
-    + "\n川虎的温馨提示：访问 http://localhost:7860 查看界面"
+    + "\n小亮的温馨提示：访问 http://localhost:7860 查看界面"
     + colorama.Style.RESET_ALL
 )
 # 默认开启本地服务器，默认可以直接从IP访问，默认不创建公开分享链接
-demo.title = i18n("川虎Chat 🚀")
+demo.title = i18n("小亮Chat 👀")
 
 if __name__ == "__main__":
     reload_javascript()
