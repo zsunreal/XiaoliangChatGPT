@@ -12,9 +12,7 @@ import re
 import html
 import sys
 import subprocess
-import geoip2.database
-import socket
-
+qu
 import gradio as gr
 from pypinyin import lazy_pinyin
 import tiktoken
