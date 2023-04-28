@@ -1,3 +1,4 @@
+
 // window.MathJax = {
 //     tex: {
 //         inlineMath: [['$', '$'], ['\\(', '\\)']]
@@ -15,6 +16,6 @@
 
     var config = document.createElement("script");
     config.type = "text/x-mathjax-config";
-    config.text = "MathJax.Hub.Config({tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],displayMath: [['$$','$$'], ['\\\\[','\\\\]']]}});";
+    config.text = "MathJax.Hub.Config({skipStartupTypeset: true, tex2jax: {inlineMath: [['$','$'], ['\\\\(','\\\\)']],displayMath: [['$$','$$'], ['\\\\[','\\\\]']]}});";
     document.head.appendChild(config);
 })();

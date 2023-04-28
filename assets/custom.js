@@ -13,10 +13,18 @@ var user_input_tb = null;
 var userInfoDiv = null;
 var appTitleDiv = null;
 var chatbot = null;
+var chatbotWrap = null;
 var apSwitch = null;
+var empty_botton = null;
 var messageBotDivs = null;
 var renderLatex = null;
+var loginUserForm = null;
+var logginUser = null;
+
+var userLogged = false;
+var usernameGotten = false;
 var shouldRenderLatex = false;
+var historyLoaded = false;
 
 var ga = document.getElementsByTagName("gradio-app");
 var targetNode = ga[0];
@@ -26,13 +34,21 @@ var isInIframe = (window.self !== window.top);
 function gradioLoaded(mutations) {
     for (var i = 0; i < mutations.length; i++) {
         if (mutations[i].addedNodes.length) {
+            loginUserForm = document.querySelector(".gradio-container > .main > .wrap > .panel > .form")
             gradioContainer = document.querySelector(".gradio-container");
             user_input_tb = document.getElementById('user_input_tb');
             userInfoDiv = document.getElementById("user_info");
             appTitleDiv = document.getElementById("app_title");
             chatbot = document.querySelector('#chuanhu_chatbot');
+            chatbotWrap = document.querySelector('#chuanhu_chatbot > .wrap');
             apSwitch = document.querySelector('.apSwitch input[type="checkbox"]');
             renderLatex = document.querySelector("#render_latex_checkbox > label > input");
+            empty_botton = document.getElementById("empty_btn")
+
+            if (loginUserForm) {
+                localStorage.setItem("userLogged", true);
+                userLogged = true;
+            }
 
             if (gradioContainer && apSwitch) {  // gradioCainter 加载出来了没?
                 adjustDarkMode();
@@ -41,14 +57,25 @@ function gradioLoaded(mutations) {
                 selectHistory();
             }
             if (userInfoDiv && appTitleDiv) {  // userInfoDiv 和 appTitleDiv 加载出来了没?
+                if (!usernameGotten) {
+                    getUserInfo();
+                }
                 setTimeout(showOrHideUserInfo(), 2000);
             }
             if (chatbot) {  // chatbot 加载出来了没?
                 setChatbotHeight();
             }
+            if (chatbotWrap) {
+                if (!historyLoaded) {
+                    loadHistoryHtml();
+                }
+            }
             if (renderLatex) {  // renderLatex 加载出来了没?
                 shouldRenderLatex = renderLatex.checked;
                 updateMathJax();
+            }
+            if (empty_botton) {
+                emptyHistory();
             }
         }
     }
@@ -99,6 +126,34 @@ function selectHistory() {
                 }
             }
         });
+    }
+}
+
+var username = null;
+function getUserInfo() {
+    if (usernameGotten) {
+        return;
+    }
+    userLogged = localStorage.getItem('userLogged');
+    if (userLogged) {
+        username = userInfoDiv.innerText;
+        if (username) {
+            if (username.includes("getting user info…")) {
+                setTimeout(getUserInfo, 500);
+                return;
+            } else if (username === " ") {
+                localStorage.removeItem("username");
+                localStorage.removeItem("userLogged")
+                userLogged = false;
+                usernameGotten = true;
+                return;
+            } else {
+                username = username.match(/User:\s*(.*)/)[1] || username;
+                localStorage.setItem("username", username);
+                usernameGotten = true;
+                clearHistoryHtml();
+            }
+        }
     }
 }
 
@@ -273,40 +328,89 @@ let timeoutId;
 let isThrottled = false;
 // 监听所有元素中message的变化，用来查找需要渲染的mathjax
 var mObserver = new MutationObserver(function (mutationsList, observer) {
-    if (shouldRenderLatex) {
-        for (var mutation of mutationsList) {
-            if (mutation.type === 'childList') {
-                for (var node of mutation.addedNodes) {
-                    if (node.nodeType === 1 && node.classList.contains('message') && node.classList.contains('bot')) {
-                        // console.log("added");
+    for (var mutation of mutationsList) {
+        if (mutation.type === 'childList') {
+            for (var node of mutation.addedNodes) {
+                if (node.nodeType === 1 && node.classList.contains('message') && node.classList.contains('bot')) {
+                    if (shouldRenderLatex) {
                         renderMathJax();
                         mathjaxUpdated = false;
                     }
+                    saveHistoryHtml();
                 }
-                for (var node of mutation.removedNodes) {
-                    if (node.nodeType === 1 && node.classList.contains('message') && node.classList.contains('bot')) {
-                        // console.log("removed");
+            }
+            for (var node of mutation.removedNodes) {
+                if (node.nodeType === 1 && node.classList.contains('message') && node.classList.contains('bot')) {
+                    if (shouldRenderLatex) {
                         renderMathJax();
                         mathjaxUpdated = false;
                     }
+                    saveHistoryHtml();
                 }
-            } else if (mutation.type === 'attributes') {
-                if (mutation.target.nodeType === 1 && mutation.target.classList.contains('message') && mutation.target.classList.contains('bot')) {
-                    if (isThrottled) break; // 为了防止重复不断疯狂渲染，加上等待_(:з」∠)_
-                    isThrottled = true; 
-                    clearTimeout(timeoutId);
-                    timeoutId = setTimeout(() => {
-                        isThrottled = false;
+            }
+        } else if (mutation.type === 'attributes') {
+            if (mutation.target.nodeType === 1 && mutation.target.classList.contains('message') && mutation.target.classList.contains('bot')) {
+                if (isThrottled) break; // 为了防止重复不断疯狂渲染，加上等待_(:з」∠)_
+                isThrottled = true;
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    isThrottled = false;
+                    if (shouldRenderLatex) {
                         // console.log("changed");
                         renderMathJax();
                         mathjaxUpdated = false;
-                    }, 500);
-                }
+                    }
+                    saveHistoryHtml();
+                }, 500);
             }
         }
     }
 });
 mObserver.observe(targetNode, { attributes: true, childList: true, subtree: true });
+
+var loadhistorytime = 0; // for debugging
+function saveHistoryHtml() {
+    var historyHtml = document.querySelector('#chuanhu_chatbot > .wrap');
+    localStorage.setItem('chatHistory', historyHtml.innerHTML);
+    console.log("History Saved")
+    historyLoaded = false;
+}
+function loadHistoryHtml() {
+    var historyHtml = localStorage.getItem('chatHistory');
+    if (!historyHtml) {
+        historyLoaded = true;
+        return; // no history, do nothing
+    }
+    userLogged = localStorage.getItem('userLogged');
+    if (userLogged){
+        historyLoaded = true;
+        return; // logged in, do nothing
+    }
+    if (!historyLoaded) {
+            var fakeHistory = document.createElement('div');
+            fakeHistory.classList.add('history-message');
+            fakeHistory.innerHTML = historyHtml;
+            chatbotWrap.insertBefore(fakeHistory, chatbotWrap.firstChild);
+        historyLoaded = true;
+        console.log("History Loaded");
+        loadhistorytime += 1; // for debugging
+    } else {
+        historyLoaded = false;
+    }
+}
+function clearHistoryHtml() {
+    localStorage.removeItem("chatHistory");
+    historyMessages = chatbotWrap.querySelector('.history-message');
+    if (historyMessages) {
+        chatbotWrap.removeChild(historyMessages);
+        console.log("History Cleared");
+    }
+}
+function emptyHistory() {
+    empty_botton.addEventListener("click", function () {
+        clearHistoryHtml();
+    });
+}
 
 // 监视页面内部 DOM 变动
 var observer = new MutationObserver(function (mutations) {
@@ -317,6 +421,7 @@ observer.observe(targetNode, { childList: true, subtree: true });
 // 监视页面变化
 window.addEventListener("DOMContentLoaded", function () {
     isInIframe = (window.self !== window.top);
+    historyLoaded = false;
 });
 window.addEventListener('resize', setChatbotHeight);
 window.addEventListener('scroll', setChatbotHeight);

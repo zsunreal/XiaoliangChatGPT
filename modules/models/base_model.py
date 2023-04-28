@@ -9,6 +9,7 @@ import sys
 import requests
 import urllib3
 import traceback
+import pathlib
 
 from tqdm import tqdm
 import colorama
@@ -229,6 +230,7 @@ class BaseLLMModel:
                     similarity_top_k=5,
                     vector_store=index._vector_store,
                     docstore=index._docstore,
+                    response_synthesizer=None
                 )
                 query_bundle = QueryBundle(real_inputs)
                 nodes = query_object.retrieve(query_bundle)
@@ -371,6 +373,8 @@ class BaseLLMModel:
             status_text = f"为了防止token超限，模型忘记了早期的 {count} 轮对话"
             yield chatbot, status_text
 
+        self.auto_save(chatbot)
+
     def retry(
         self,
         chatbot,
@@ -481,6 +485,7 @@ class BaseLLMModel:
         self.history = []
         self.all_token_counts = []
         self.interrupted = False
+        pathlib.Path(os.path.join(HISTORY_DIR, self.user_identifier, new_auto_history_filename(os.path.join(HISTORY_DIR, self.user_identifier)))).touch()
         return [], self.token_message([0])
 
     def delete_first_conversation(self):
@@ -521,6 +526,10 @@ class BaseLLMModel:
             filename += ".json"
         return save_file(filename, self.system_prompt, self.history, chatbot, user_name)
 
+    def auto_save(self, chatbot):
+        history_file_path = get_history_filepath(self.user_identifier)
+        save_file(history_file_path, self.system_prompt, self.history, chatbot, self.user_identifier)
+
     def export_markdown(self, filename, chatbot, user_name):
         if filename == "":
             return
@@ -528,12 +537,17 @@ class BaseLLMModel:
             filename += ".md"
         return save_file(filename, self.system_prompt, self.history, chatbot, user_name)
 
-    def load_chat_history(self, filename, chatbot, user_name):
+    def load_chat_history(self, filename, user_name):
         logging.debug(f"{user_name} 加载对话历史中……")
-        if type(filename) != str:
+        logging.info(f"filename: {filename}")
+        if type(filename) != str and filename is not None:
             filename = filename.name
         try:
-            with open(os.path.join(HISTORY_DIR, user_name, filename), "r") as f:
+            if "/" not in filename:
+                history_file_path = os.path.join(HISTORY_DIR, user_name, filename)
+            else:
+                history_file_path = filename
+            with open(history_file_path, "r") as f:
                 json_s = json.load(f)
             try:
                 if type(json_s["history"][0]) == str:
@@ -547,14 +561,23 @@ class BaseLLMModel:
                     json_s["history"] = new_history
                     logging.info(new_history)
             except:
-                # 没有对话历史
                 pass
             logging.debug(f"{user_name} 加载对话历史完毕")
             self.history = json_s["history"]
-            return filename, json_s["system"], json_s["chatbot"]
-        except FileNotFoundError:
-            logging.warning(f"{user_name} 没有找到对话历史文件，不执行任何操作")
-            return filename, self.system_prompt, chatbot
+            return os.path.basename(filename), json_s["system"], json_s["chatbot"]
+        except:
+            # 没有对话历史或者对话历史解析失败
+            logging.info(f"没有找到对话历史记录 {filename}")
+            return gr.update(), self.system_prompt, gr.update()
+
+    def auto_load(self):
+        if self.user_identifier == "":
+            self.reset()
+            return self.system_prompt, gr.update()
+        history_file_path = get_history_filepath(self.user_identifier)
+        filename, system_prompt, chatbot = self.load_chat_history(history_file_path, self.user_identifier)
+        return system_prompt, chatbot
+
 
     def like(self):
         """like the last response, implement if needed
