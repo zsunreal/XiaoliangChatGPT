@@ -266,8 +266,8 @@ with gr.Blocks(css=customCSS, theme=small_and_beautiful_theme) as demo:
                         changeProxyBtn = gr.Button(i18n("🔄 设置代理地址"))
                         default_btn = gr.Button(i18n("🔙 恢复默认设置"))
 
-    gr.Markdown(CHUANHU_DESCRIPTION, elem_id="description")
-    gr.HTML(FOOTER.format(versions=versions_html()), elem_id="footer")
+    # gr.Markdown(CHUANHU_DESCRIPTION, elem_id="description")
+    # gr.HTML(FOOTER.format(versions=versions_html()), elem_id="footer")
 
     # https://github.com/gradio-app/gradio/pull/3296
     def create_greeting(request: gr.Request):
