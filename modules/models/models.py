@@ -20,7 +20,6 @@ import asyncio
 import aiohttp
 from enum import Enum
 import uuid
-import timedelta
 
 from ..presets import *
 from ..llama_func import *
