@@ -1,10 +1,13 @@
 :root {
-    --chatbot-color-light: #F3F3F3;
-    --chatbot-color-dark: #121111;
+    --chatbot-color-light: #000000;
+    --chatbot-color-dark: #FFFFFF;
+    --chatbot-background-color-light: #F3F3F3;
+    --chatbot-background-color-dark: #121111;
+    --message-user-background-color-light: #95EC69;
+    --message-user-background-color-dark: #26B561;
+    --message-bot-background-color-light: #FFFFFF;
+    --message-bot-background-color-dark: #2C2C2C;
 }
-
-.message p { margin-bottom: 0.6rem !important;}
-.message p:last-child { margin-bottom: 0 !important; }
 
 #app_title {
     font-weight: var(--prose-header-text-weight);
@@ -16,13 +19,15 @@
 }
 #description {
     text-align: center;
-    margin: 16px 0;
+    margin: 32px 0 4px 0;
 }
 
-/* 覆盖gradio的页脚信息QAQ */
-/* footer {
-    display: none !important;
-} */
+/* gradio的页脚信息 */
+footer {
+    /* display: none !important; */
+    margin-top: .2em !important;
+    font-size: 85%;
+}
 #footer {
     text-align: center;
 }
@@ -31,7 +36,7 @@
 }
 #footer .versions{
     font-size: 85%;
-    opacity: 0.85;
+    opacity: 0.60;
 }
 
 #float_display {
@@ -73,7 +78,8 @@
 }
 #status_display p {
     font-size: .85em;
-    font-family: monospace;
+    font-family: ui-monospace, "SF Mono", "SFMono-Regular", "Menlo", "Consolas", "Liberation Mono", "Microsoft Yahei UI", "Microsoft Yahei", monospace;
+    /* Windows下中文的monospace会fallback为新宋体，实在太丑，这里折中使用微软雅黑 */
     color: var(--body-text-color-subdued);
 }
 
@@ -105,7 +111,7 @@
 }
 .progress-bar {
     background-color: var(--input-background-fill);;
-    margin: 0 1em;
+    margin: .5em 0 !important;
     height: 20px;
     border-radius: 10px;
     overflow: hidden;
@@ -182,25 +188,25 @@ ol:not(.options), ul:not(.options) {
 
 /* 亮色（默认） */
 #chuanhu_chatbot {
-    background-color: var(--chatbot-color-light) !important;
-    color: #000000 !important;
+    background-color: var(--chatbot-background-color-light) !important;
+    color: var(--chatbot-color-light) !important;
 }
 [data-testid = "bot"] {
-    background-color: #FFFFFF !important;
+    background-color: var(--message-bot-background-color-light) !important;
 }
 [data-testid = "user"] {
-    background-color: #95EC69 !important;
+    background-color: var(--message-user-background-color-light) !important;
 }
 /* 暗色 */
 .dark #chuanhu_chatbot {
-    background-color: var(--chatbot-color-dark) !important;
-    color: #FFFFFF !important;
+    background-color: var(--chatbot-background-color-dark) !important;
+    color: var(--chatbot-color-dark) !important;
 }
 .dark [data-testid = "bot"] {
-    background-color: #2C2C2C !important;
+    background-color: var(--message-bot-background-color-dark) !important;
 }
 .dark [data-testid = "user"] {
-    background-color: #26B561 !important;
+    background-color: var(--message-user-background-color-dark) !important;
 }
 
 /* 屏幕宽度大于等于500px的设备 */
@@ -229,7 +235,7 @@ ol:not(.options), ul:not(.options) {
     }
 }
 /* 对话气泡 */
-[class *= "message"] {
+.message {
     border-radius: var(--radius-xl) !important;
     border: none;
     padding: var(--spacing-xl) !important;
@@ -246,6 +252,58 @@ ol:not(.options), ul:not(.options) {
     max-width: 85%;
     width: auto !important;
     border-bottom-right-radius: 0 !important;
+}
+
+.message p { margin-bottom: 0.6rem !important;}
+.message p:last-of-type { margin-bottom: 0 !important; }
+
+.message .md-message {
+    display: block;
+    padding: 0 !important;
+}
+.message .raw-message {
+    display: block;
+    padding: 0 !important;
+    white-space: pre-wrap;
+}
+.raw-message.hideM, .md-message.hideM {
+    display: none;
+}
+
+/* custom buttons */
+.chuanhu-btn {
+    border-radius: 5px;
+    /* background-color: #E6E6E6 !important; */
+    color: rgba(120, 120, 120, 0.64) !important;
+    padding: 4px !important;
+    position: absolute;
+    right: -22px;
+    cursor: pointer !important;
+    transition: color .2s ease, background-color .2s ease;
+}
+.chuanhu-btn:hover {
+    background-color: rgba(167, 167, 167, 0.25) !important;
+    color: unset !important;
+}
+.chuanhu-btn:active {
+    background-color: rgba(167, 167, 167, 0.5) !important;
+}
+.chuanhu-btn:focus {
+    outline: none;
+}
+.copy-bot-btn {
+    /* top: 18px; */
+    bottom: 0;
+}
+.toggle-md-btn {
+    /* top: 0; */
+    bottom: 20px;
+}
+.copy-code-btn {
+    position: relative;
+    float: right;
+    font-size: 1em;
+    cursor: pointer;
 }
 
 .message-wrap>div img{

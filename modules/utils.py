@@ -182,6 +182,7 @@ def convert_mdtext(md_text):
     non_code_parts = code_block_pattern.split(md_text)[::2]
 
     result = []
+    raw = f'<div class="raw-message hideM">{html.escape(md_text)}</div>'
     for non_code, code in zip(non_code_parts, code_blocks + [""]):
         if non_code.strip():
             non_code = normalize_markdown(non_code)
@@ -193,8 +194,10 @@ def convert_mdtext(md_text):
             code = markdown_to_html_with_syntax_highlight(code)
             result.append(code)
     result = "".join(result)
-    result += ALREADY_CONVERTED_MARK
-    return result
+    output = f'<div class="md-message">{result}</div>'
+    output += raw
+    output += ALREADY_CONVERTED_MARK
+    return output
 
 
 def convert_asis(userinput):
@@ -459,8 +462,8 @@ def run(command, desc=None, errdesc=None, custom_env=None, live=False):
         result = subprocess.run(command, shell=True, env=os.environ if custom_env is None else custom_env)
         if result.returncode != 0:
             raise RuntimeError(f"""{errdesc or 'Error running command'}.
-Command: {command}
-Error code: {result.returncode}""")
+                Command: {command}
+                Error code: {result.returncode}""")
 
         return ""
     result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, env=os.environ if custom_env is None else custom_env)
@@ -483,7 +486,7 @@ def versions_html():
         commit_hash = "<none>"
     if commit_hash != "<none>":
         short_commit = commit_hash[0:7]
-        commit_info = f"<a style=\"text-decoration:none\" href=\"https://github.com/GaiZhenbiao/ChuanhuChatGPT/commit/{short_commit}\">{short_commit}</a>"
+        commit_info = f"<a style=\"text-decoration:none;color:inherit\" href=\"https://github.com/GaiZhenbiao/ChuanhuChatGPT/commit/{short_commit}\">{short_commit}</a>"
     else:
         commit_info = "unknown \U0001F615"
     return f"""
@@ -491,7 +494,7 @@ def versions_html():
          • 
         Gradio: {gr.__version__}
          • 
-        Commit: {commit_info}
+        <a style="text-decoration:none;color:inherit" href="https://github.com/GaiZhenbiao/ChuanhuChatGPT">ChuanhuChat</a>: {commit_info}
         """
 
 def add_source_numbers(lst, source_name = "Source", use_source = True):
@@ -583,6 +586,7 @@ def get_latest_filepath(dirname):
 
 def get_history_filepath(username):
     dirname = os.path.join(HISTORY_DIR, username)
+    os.makedirs(dirname, exist_ok=True)
     latest_file = get_latest_filepath(dirname)
     if not latest_file:
         latest_file = new_auto_history_filename(dirname)
