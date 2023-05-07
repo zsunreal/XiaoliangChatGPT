@@ -373,7 +373,7 @@ class BaseLLMModel:
             status_text = f"为了防止token超限，模型忘记了早期的 {count} 轮对话"
             yield chatbot, status_text
 
-        self.auto_save(chatbot)
+        # self.auto_save(chatbot)
 
     def retry(
         self,
